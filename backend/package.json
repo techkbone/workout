@@ -20,7 +20,9 @@
     "helmet": "^8.1.0",
     "pg": "^8.16.3",
     "remark": "^15.0.1",
-    "unist-util-visit": "^5.0.0"
+    "unist-util-visit": "^5.0.0",
+    "xlsx": "^0.18.5",
+    "zod": "^4.1.12"
   },
   "devDependencies": {
     "jest": "^30.2.0",

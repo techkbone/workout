@@ -1,0 +1,107 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: workout-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME:-workout_tracker}
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./backend/db/schema.sql:/docker-entrypoint-initdb.d/schema.sql
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - workout-network
+
+  # Backend API
+  backend:
+    build:
+      context: ./backend
+      target: ${NODE_ENV:-development}
+    container_name: workout-backend
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=${NODE_ENV:-development}
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=${DB_NAME:-workout_tracker}
+      - DB_USER=${DB_USER:-postgres}
+      - DB_PASSWORD=${DB_PASSWORD:-postgres}
+      - PORT=3001
+      - CORS_ORIGIN=${CORS_ORIGIN:-http://localhost:5173}
+      - FRONTEND_URL=${FRONTEND_URL:-http://localhost:5173}
+      - API_RATE_LIMIT_WINDOW_MS=${API_RATE_LIMIT_WINDOW_MS:-900000}
+      - API_RATE_LIMIT_MAX_REQUESTS=${API_RATE_LIMIT_MAX_REQUESTS:-100}
+    volumes:
+      # For development: mount source code
+      - ./backend:/app
+      - /app/node_modules
+      # Mount Excel file and generated program.json
+      - ./Programme_Westside_Rugby_Masters_2025-2026.xlsx:/app/Programme_Westside_Rugby_Masters_2025-2026.xlsx:ro
+      - backend_data:/app/data
+    ports:
+      - "${PORT:-3001}:3001"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - workout-network
+    command: npm start
+
+  # Frontend (Development)
+  frontend-dev:
+    build:
+      context: ./frontend
+      target: dev
+    container_name: workout-frontend-dev
+    restart: unless-stopped
+    environment:
+      - VITE_API_URL=${VITE_API_URL:-http://localhost:3001}
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    ports:
+      - "${FRONTEND_PORT:-5173}:5173"
+    depends_on:
+      - backend
+    networks:
+      - workout-network
+    profiles:
+      - dev
+
+  # Frontend (Production with Nginx)
+  frontend:
+    build:
+      context: ./frontend
+      target: production
+    container_name: workout-frontend
+    restart: unless-stopped
+    ports:
+      - "${FRONTEND_PORT:-80}:80"
+    depends_on:
+      - backend
+    networks:
+      - workout-network
+    profiles:
+      - prod
+
+networks:
+  workout-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+    driver: local
+  backend_data:
+    driver: local

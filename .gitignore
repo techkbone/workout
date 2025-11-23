@@ -27,6 +27,7 @@ Thumbs.db
 # Editor directories and files
 .vscode/
 .idea/
+*.code-workspace
 
 # Generated data
 program.json
@@ -34,3 +35,23 @@ backend/data/
 
 # Specify cache
 .specify/cache/
+
+# Docker
+.docker/
+docker-compose.override.yml
+
+# Test coverage
+coverage/
+*.coverage
+.nyc_output/
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# IDE
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
