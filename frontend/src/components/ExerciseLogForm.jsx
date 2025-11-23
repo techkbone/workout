@@ -3,7 +3,9 @@ import { Button, TextField, Box, Typography } from '@mui/material'
 
 function ExerciseLogForm({ exercise, onSubmit }) {
   const [sets, setSets] = useState(
-    exercise.sets.map(() => ({ weight: '', reps: '' }))
+    Array(exercise.sets[0]?.sets || 1)
+      .fill(null)
+      .map(() => ({ weight: '', reps: '' }))
   )
 
   const handleChange = (setIndex, field, value) => {

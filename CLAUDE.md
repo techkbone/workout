@@ -120,14 +120,18 @@ backend/
 │   ├── api/
 │   │   ├── routes/
 │   │   │   ├── index.js    # Main API router
-│   │   │   └── workoutRoutes.js  # Workout endpoints (/api/workouts)
+│   │   │   ├── workoutRoutes.js     # Workout endpoints (/api/workouts)
+│   │   │   ├── analyticsRoutes.js   # Analytics endpoints (/api/analytics)
+│   │   │   └── substitutionRoutes.js # Exercise substitution (/api/substitutions)
 │   │   └── middleware/
 │   │       ├── auth.js     # Basic authentication
 │   │       ├── logger.js   # Request logging
 │   │       └── errorHandler.js
 │   ├── models/             # Database models (User, WorkoutLog, PersonalRecord)
 │   └── services/
-│       └── programService.js  # Reads/caches program.json data
+│       ├── programService.js      # Reads/caches program.json data
+│       ├── analyticsService.js    # 1RM calculations, PR detection
+│       └── substitutionService.js # Exercise alternatives and validation
 └── tests/
     ├── unit/               # Parser unit tests
     └── integration/        # API integration tests
@@ -139,13 +143,19 @@ backend/
 frontend/
 ├── src/
 │   ├── main.jsx            # React app entry point
-│   ├── App.jsx             # Root component (currently just renders TodayWorkout)
+│   ├── App.jsx             # Root component with navigation (Today, Plan, Progress)
 │   ├── pages/
-│   │   └── TodayWorkout.jsx    # Main workout logging page
+│   │   ├── TodayWorkout.jsx     # Main workout logging page
+│   │   ├── Plan.jsx             # Training plan calendar with substitutions
+│   │   └── Progress.jsx         # Analytics and progress visualization
 │   ├── components/
-│   │   ├── WorkoutDisplay.jsx   # Displays planned workout
-│   │   ├── ExerciseLogForm.jsx  # Form to log set performance
-│   │   └── LottieAnimation.jsx  # Exercise animation component
+│   │   ├── WorkoutDisplay.jsx            # Displays planned workout
+│   │   ├── ExerciseLogForm.jsx           # Form to log set performance
+│   │   ├── LottieAnimation.jsx           # Exercise animation component
+│   │   ├── WorkoutCalendar.jsx           # Calendar view with workout indicators
+│   │   ├── ExerciseSubstitutionModal.jsx # Modal for selecting exercise alternatives
+│   │   ├── PRDisplay.jsx                 # Personal records table display
+│   │   └── ExerciseHistoryChart.jsx      # Recharts progress visualization
 │   └── services/
 │       └── apiClient.js    # Backend API communication
 └── index.html              # Vite entry HTML
@@ -160,18 +170,34 @@ frontend/
 
 ## API Endpoints
 
-### Current Implementation
+All endpoints require basic authentication via `x-user-id` header (see `backend/src/api/middleware/auth.js`).
+
+### Workout Endpoints
 
 - `GET /api/` - Health check ("API is running")
 - `GET /api/workouts/today` - Get today's planned workout from program.json
 - `POST /api/workouts/log` - Log completed workout to database
+  - Body: `{ sessionId, exercises, date, notes, substitutions }`
+- `GET /api/workouts/logs` - Get workout logs with optional date range
+  - Query params: `startDate`, `endDate`
 
-Both workout endpoints require basic authentication (see `backend/src/api/middleware/auth.js`).
+### Analytics Endpoints
 
-### Planned Endpoints
+- `GET /api/analytics/prs` - Get personal records for all exercises or specific exercise
+  - Query params: `exercise` (optional)
+- `GET /api/analytics/exercise-history/:exerciseName` - Get historical performance for an exercise
+  - Query params: `limit` (default: 50)
+- `GET /api/analytics/progress/:exerciseName` - Get progress analytics with trend data
+  - Query params: `days` (default: 90)
 
-- Analytics routes for PRs and exercise history (see tasks.md Phase 5)
-- Exercise substitution support (see tasks.md Phase 6)
+### Exercise Substitution Endpoints
+
+- `GET /api/substitutions/alternatives/:exerciseName` - Get alternative exercises
+  - Query params: `reason` (optional, e.g., "shoulder pain")
+- `GET /api/substitutions/categories` - Get all exercise categories
+- `GET /api/substitutions/category/:categoryName` - Get exercises by category
+- `POST /api/substitutions/validate` - Validate a proposed substitution
+  - Body: `{ originalExercise, substituteExercise }`
 
 ## Development Workflow
 
@@ -181,7 +207,11 @@ Tasks are managed in `specs/001-workout-tracker-mvp/tasks.md` following the Spec
 - Tasks marked with `[X]` are complete
 - Tasks organized by phase and user story (US1, US2, US3, US4)
 - `[P]` indicates parallelizable tasks
-- Current status: Phase 4 mostly complete (User Story 1 - View and Log Workout)
+- Current status: Phase 6 complete (Phases 4-6 implemented)
+  - Phase 4: User Story 1 - View and Log Workout ✓
+  - Phase 5: User Story 2 - View Progress and Analytics ✓
+  - Phase 6: User Story 3 - Plan and Adapt Training ✓
+  - Phase 7: Final polish (documentation, tests, security) - In progress
 
 ### Testing Strategy
 
@@ -224,6 +254,58 @@ The application is designed to be used on a phone during workouts:
 - Minimize text input where possible
 - Material-UI components should be configured for mobile responsiveness
 
+## Implemented Features
+
+### Analytics System (Phase 5)
+
+The analytics system provides comprehensive progress tracking:
+
+- **1RM Estimation**: Uses both Epley and Brzycki formulas to calculate estimated 1-rep max
+  - Epley: `weight × (1 + reps/30)`
+  - Brzycki: `weight × (36 / (37 - reps))`
+- **Personal Records**: Tracks PRs for weight, reps, and estimated 1RM per exercise
+- **Exercise History**: Chronological view of all logged performances for an exercise
+- **Progress Trends**: Calculates improvement percentages and best lifts over time periods
+- **Data Visualization**: Recharts-based charts showing weight/reps progression over time
+
+### Exercise Substitution System (Phase 6)
+
+The substitution system helps adapt workouts based on injuries or equipment availability:
+
+- **Exercise Database**: Categorized database of 14 main exercises with metadata
+  - Categories: Lower Body (Posterior Chain, Squat Pattern, Unilateral), Upper Body (Horizontal/Vertical/Incline Press, Rear Delt), Full Body (Hip Hinge, Loaded Carry)
+  - Exercise types: Max Effort, Dynamic Effort, Accessory, Prehab, GPP
+  - Known restrictions: Injury types that contraindicate specific exercises
+- **Smart Alternatives**: Suggests exercises from same category with similar movement patterns
+- **Validation System**: Checks if substitutions maintain training stimulus
+  - Same category: Valid substitution
+  - Different category: Warning with category mismatch details
+  - Custom exercises: Allowed with cautionary message
+- **Calendar Integration**: View workout history and plan future substitutions
+- **Substitution Tracking**: Records all substitutions made during workout logging
+
+### User Interface
+
+Three main pages provide the complete workout tracking experience:
+
+1. **Today (TodayWorkout.jsx)**: View and log today's planned workout
+   - Display prescribed exercises with sets/reps/weight
+   - Log actual performance for each set
+   - Submit completed workout to database
+   - Lottie animations for exercise demonstrations
+
+2. **Plan (Plan.jsx)**: View training calendar and make substitutions
+   - Calendar view showing workout history (past 3 months)
+   - Select any date to view planned workout
+   - Substitute exercises with validation
+   - Preview substitution warnings before confirming
+
+3. **Progress (Progress.jsx)**: Analyze performance and track improvements
+   - View personal records for all exercises or filter by exercise
+   - Exercise history chart with weight/reps over time
+   - Progress analytics with trend calculations
+   - Estimated 1RM tracking
+
 ## Dependencies Notes
 
 ### Backend Key Dependencies
@@ -237,6 +319,7 @@ The application is designed to be used on a phone during workouts:
 
 - `react@^18.2.0` - UI framework
 - `@mui/material@^7.3.5` - Component library
+- `recharts@^2.15.0` - Chart library for analytics visualization
 - `lottie-react@^2.4.1` - Animation playback
 - `react-player@^3.4.0` - Video playback fallback
 - `vite@^4.4.5` - Build tool and dev server

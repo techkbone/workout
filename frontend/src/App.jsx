@@ -2,10 +2,12 @@ import { useState } from 'react'
 import './App.css'
 import TodayWorkout from './pages/TodayWorkout'
 import Progress from './pages/Progress'
+import Plan from './pages/Plan'
 import { AppBar, Toolbar, Typography, Button, Box } from '@mui/material'
 import FitnessCenterIcon from '@mui/icons-material/FitnessCenter'
 import ShowChartIcon from '@mui/icons-material/ShowChart'
 import TodayIcon from '@mui/icons-material/Today'
+import CalendarMonthIcon from '@mui/icons-material/CalendarMonth'
 
 function App() {
   const [currentPage, setCurrentPage] = useState('today')
@@ -33,6 +35,19 @@ function App() {
           </Button>
           <Button
             color="inherit"
+            startIcon={<CalendarMonthIcon />}
+            onClick={() => setCurrentPage('plan')}
+            sx={{
+              bgcolor:
+                currentPage === 'plan'
+                  ? 'rgba(255,255,255,0.1)'
+                  : 'transparent',
+            }}
+          >
+            Plan
+          </Button>
+          <Button
+            color="inherit"
             startIcon={<ShowChartIcon />}
             onClick={() => setCurrentPage('progress')}
             sx={{
@@ -49,6 +64,7 @@ function App() {
 
       <Box>
         {currentPage === 'today' && <TodayWorkout />}
+        {currentPage === 'plan' && <Plan />}
         {currentPage === 'progress' && <Progress />}
       </Box>
     </Box>
