@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Container, Typography, Button, Alert, CircularProgress, Box, Paper } from '@mui/material'
+import { Container, Typography, Button, Alert, Box, Paper } from '@mui/material'
 import { getTodaysWorkout, logWorkout } from '../services/apiClient'
 import WorkoutDisplay from '../components/WorkoutDisplay'
 import ExerciseLogForm from '../components/ExerciseLogForm'
+import WorkoutSkeleton from '../components/WorkoutSkeleton'
 import { glassmorphism } from '../theme/customTheme'
 
 function TodayWorkout() {
@@ -63,10 +64,8 @@ function TodayWorkout() {
 
   if (loading) {
     return (
-      <Container>
-        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '50vh' }}>
-          <CircularProgress />
-        </Box>
+      <Container maxWidth="md">
+        <WorkoutSkeleton />
       </Container>
     )
   }

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { motion } from 'framer-motion'
 import {
   Container,
   Typography,
@@ -9,9 +10,12 @@ import {
   CardContent,
   Button,
   Chip,
+  Paper,
+  Skeleton
 } from '@mui/material'
 import SwapHorizIcon from '@mui/icons-material/SwapHoriz'
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth'
+import FitnessCenterIcon from '@mui/icons-material/FitnessCenter'
 import {
   getTodaysWorkout,
   getWorkoutLogs,
@@ -19,6 +23,7 @@ import {
 } from '../services/apiClient'
 import WorkoutCalendar from '../components/WorkoutCalendar'
 import ExerciseSubstitutionModal from '../components/ExerciseSubstitutionModal'
+import { glassmorphism } from '../theme/customTheme'
 
 function Plan() {
   const [selectedDate, setSelectedDate] = useState(new Date())
@@ -118,15 +123,68 @@ function Plan() {
 
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
-        <CalendarMonthIcon fontSize="large" color="primary" />
-        <Typography variant="h4">Training Plan</Typography>
-      </Box>
+      {/* Page Header */}
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+      >
+        <Paper
+          elevation={0}
+          sx={{
+            ...glassmorphism,
+            p: 3,
+            mb: 4,
+            background: 'rgba(255, 255, 255, 0.15)',
+            backdropFilter: 'blur(20px)',
+            border: '1px solid rgba(255, 255, 255, 0.3)',
+            borderRadius: 4,
+            boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.2)'
+          }}
+        >
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <motion.div
+              animate={{ rotateY: [0, 360] }}
+              transition={{ duration: 3, repeat: Infinity, ease: 'linear' }}
+            >
+              <CalendarMonthIcon sx={{ fontSize: 40, color: 'white' }} />
+            </motion.div>
+            <Typography
+              variant="h4"
+              sx={{
+                color: 'white',
+                fontWeight: 700,
+                textShadow: '0 2px 10px rgba(0,0,0,0.3)'
+              }}
+            >
+              Training Plan
+            </Typography>
+          </Box>
+        </Paper>
+      </motion.div>
 
       {error && (
-        <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>
-          Error: {error.message}
-        </Alert>
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.3 }}
+        >
+          <Alert
+            severity="error"
+            onClose={() => setError(null)}
+            sx={{
+              ...glassmorphism,
+              mb: 2,
+              background: 'rgba(239, 68, 68, 0.15)',
+              backdropFilter: 'blur(20px)',
+              border: '1px solid rgba(239, 68, 68, 0.3)',
+              color: 'white',
+              '& .MuiAlert-icon': { color: 'rgba(248, 113, 113, 1)' }
+            }}
+          >
+            Error: {error.message}
+          </Alert>
+        </motion.div>
       )}
 
       <Box
@@ -146,108 +204,225 @@ function Plan() {
         </Box>
 
         {/* Workout Details */}
-        <Box>
-          <Card>
-            <CardContent>
-              <Box
+        <motion.div
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+        >
+          <Paper
+            elevation={0}
+            sx={{
+              ...glassmorphism,
+              background: 'rgba(255, 255, 255, 0.12)',
+              backdropFilter: 'blur(20px)',
+              border: '1px solid rgba(255, 255, 255, 0.25)',
+              borderRadius: 4,
+              boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.15)',
+              p: 3
+            }}
+          >
+            <Box
+              sx={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                mb: 3,
+              }}
+            >
+              <Typography
+                variant="h6"
                 sx={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  mb: 2,
+                  color: 'white',
+                  fontWeight: 700,
+                  textShadow: '0 2px 8px rgba(0,0,0,0.2)'
                 }}
               >
-                <Typography variant="h6">
-                  Workout for {selectedDate.toLocaleDateString()}
-                </Typography>
-                {selectedDate.toDateString() === new Date().toDateString() && (
-                  <Chip label="Today" color="primary" size="small" />
-                )}
-              </Box>
+                Workout for {selectedDate.toLocaleDateString()}
+              </Typography>
+              {selectedDate.toDateString() === new Date().toDateString() && (
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ type: 'spring', stiffness: 200 }}
+                >
+                  <Chip
+                    label="Today"
+                    size="small"
+                    sx={{
+                      bgcolor: 'rgba(16, 185, 129, 0.3)',
+                      color: 'white',
+                      fontWeight: 600,
+                      border: '1px solid rgba(16, 185, 129, 0.5)',
+                      backdropFilter: 'blur(10px)'
+                    }}
+                  />
+                </motion.div>
+              )}
+            </Box>
 
-              {loading ? (
-                <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
-                  <CircularProgress />
-                </Box>
-              ) : workout ? (
-                <Box>
-                  {workout.map((exercise, index) => (
-                    <Card key={index} variant="outlined" sx={{ mb: 2 }}>
-                      <CardContent>
-                        <Box
-                          sx={{
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            alignItems: 'flex-start',
-                            mb: 1,
-                          }}
-                        >
-                          <Box>
-                            <Typography variant="h6">
+            {loading ? (
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                {[1, 2].map((i) => (
+                  <Skeleton
+                    key={i}
+                    variant="rounded"
+                    height={120}
+                    sx={{ bgcolor: 'rgba(255, 255, 255, 0.1)', borderRadius: 3 }}
+                  />
+                ))}
+              </Box>
+            ) : workout ? (
+              <Box>
+                {workout.map((exercise, index) => (
+                  <motion.div
+                    key={index}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.1 }}
+                  >
+                    <Paper
+                      sx={{
+                        mb: 2,
+                        p: 2,
+                        background: 'rgba(255, 255, 255, 0.08)',
+                        backdropFilter: 'blur(10px)',
+                        border: '1px solid rgba(255, 255, 255, 0.15)',
+                        borderRadius: 3,
+                        transition: 'all 0.3s ease',
+                        '&:hover': {
+                          background: 'rgba(255, 255, 255, 0.12)',
+                          borderColor: 'rgba(255, 255, 255, 0.25)',
+                          transform: 'translateX(4px)'
+                        }
+                      }}
+                    >
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'flex-start',
+                          mb: 1,
+                        }}
+                      >
+                        <Box sx={{ flex: 1 }}>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                            <FitnessCenterIcon sx={{ fontSize: 20, color: 'rgba(99, 102, 241, 1)' }} />
+                            <Typography
+                              variant="h6"
+                              sx={{
+                                color: 'white',
+                                fontWeight: 600
+                              }}
+                            >
                               {getDisplayExerciseName(exercise.name)}
                             </Typography>
-                            {substitutions[exercise.name] && (
+                          </Box>
+                          {substitutions[exercise.name] && (
+                            <motion.div
+                              initial={{ scale: 0 }}
+                              animate={{ scale: 1 }}
+                              transition={{ type: 'spring' }}
+                            >
                               <Chip
                                 label={`Substituted from: ${exercise.name}`}
                                 size="small"
-                                color="warning"
-                                sx={{ mt: 0.5 }}
+                                sx={{
+                                  bgcolor: 'rgba(251, 146, 60, 0.3)',
+                                  color: 'white',
+                                  fontWeight: 600,
+                                  border: '1px solid rgba(251, 146, 60, 0.5)',
+                                  mt: 0.5
+                                }}
                               />
-                            )}
-                          </Box>
+                            </motion.div>
+                          )}
+                        </Box>
+                        <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                           <Button
                             size="small"
                             startIcon={<SwapHorizIcon />}
-                            onClick={() =>
-                              handleOpenSubstitution(exercise.name)
-                            }
+                            onClick={() => handleOpenSubstitution(exercise.name)}
+                            sx={{
+                              color: 'white',
+                              bgcolor: 'rgba(99, 102, 241, 0.2)',
+                              border: '1px solid rgba(99, 102, 241, 0.4)',
+                              borderRadius: 2,
+                              '&:hover': {
+                                bgcolor: 'rgba(99, 102, 241, 0.3)',
+                                borderColor: 'rgba(99, 102, 241, 0.6)'
+                              }
+                            }}
                           >
                             Substitute
                           </Button>
+                        </motion.div>
+                      </Box>
+
+                      {exercise.sets && exercise.sets.length > 0 && (
+                        <Box sx={{ mt: 2, pl: 1 }}>
+                          {exercise.sets.map((set, i) => (
+                            <Typography
+                              key={i}
+                              variant="body2"
+                              sx={{ color: 'rgba(255, 255, 255, 0.85)', mb: 0.5 }}
+                            >
+                              • {set.sets} × {set.reps} @{' '}
+                              {set.weight
+                                ? `${set.weight}${set.unit}`
+                                : `${set.percentage}%`}
+                            </Typography>
+                          ))}
                         </Box>
+                      )}
 
-                        {exercise.sets && exercise.sets.length > 0 && (
-                          <Box sx={{ mt: 2 }}>
-                            {exercise.sets.map((set, i) => (
-                              <Typography
-                                key={i}
-                                variant="body2"
-                                color="text.secondary"
-                              >
-                                {set.sets} × {set.reps} @{' '}
-                                {set.weight
-                                  ? `${set.weight}${set.unit}`
-                                  : `${set.percentage}%`}
-                              </Typography>
-                            ))}
-                          </Box>
-                        )}
+                      {substitutions[exercise.name]?.validation?.warning && (
+                        <Alert
+                          severity="warning"
+                          sx={{
+                            mt: 2,
+                            bgcolor: 'rgba(251, 146, 60, 0.15)',
+                            color: 'white',
+                            border: '1px solid rgba(251, 146, 60, 0.3)',
+                            '& .MuiAlert-icon': { color: 'rgba(251, 191, 36, 1)' }
+                          }}
+                        >
+                          {substitutions[exercise.name].validation.warning}
+                        </Alert>
+                      )}
+                    </Paper>
+                  </motion.div>
+                ))}
 
-                        {substitutions[exercise.name]?.validation?.warning && (
-                          <Alert severity="warning" sx={{ mt: 2 }}>
-                            {substitutions[exercise.name].validation.warning}
-                          </Alert>
-                        )}
-                      </CardContent>
-                    </Card>
-                  ))}
-
-                  {Object.keys(substitutions).length > 0 && (
-                    <Alert severity="info" sx={{ mt: 2 }}>
+                {Object.keys(substitutions).length > 0 && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.3 }}
+                  >
+                    <Alert
+                      severity="info"
+                      sx={{
+                        mt: 2,
+                        bgcolor: 'rgba(59, 130, 246, 0.15)',
+                        color: 'white',
+                        border: '1px solid rgba(59, 130, 246, 0.3)',
+                        '& .MuiAlert-icon': { color: 'rgba(96, 165, 250, 1)' }
+                      }}
+                    >
                       <strong>Note:</strong> You have made{' '}
                       {Object.keys(substitutions).length} substitution(s). These
                       will be saved when you log your workout.
                     </Alert>
-                  )}
-                </Box>
-              ) : (
-                <Typography color="text.secondary">
-                  No workout planned for this date
-                </Typography>
-              )}
-            </CardContent>
-          </Card>
-        </Box>
+                  </motion.div>
+                )}
+              </Box>
+            ) : (
+              <Typography sx={{ color: 'rgba(255, 255, 255, 0.7)', textAlign: 'center', py: 4 }}>
+                No workout planned for this date
+              </Typography>
+            )}
+          </Paper>
+        </motion.div>
       </Box>
 
       <ExerciseSubstitutionModal
